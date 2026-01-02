@@ -1,0 +1,35 @@
+name: Daily Trade Data Update
+
+on:
+  schedule:
+    # 毎日日本時間の午前9時（UTC 0:00）に実行
+    - cron: '0 0 * * *'
+  # GitHubの画面から手動で実行できるようにするボタンを追加
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # 書き込み権限を与えて、JSONファイルを更新できるようにします
+    permissions:
+      contents: write
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Pythonのセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: データ更新スクリプトの実行
+        run: python update_data.py
+
+      - name: 変更をコミットしてGitHubに保存
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add trading_data.json
+          git commit -m "Auto-update trading data" || echo "No changes to commit"
+          git push
